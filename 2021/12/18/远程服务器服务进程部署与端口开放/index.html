@@ -5,15 +5,24 @@
   
 
   
-  <title>Jiayyi&#39;s blog</title>
+  <title>远程服务器服务进程部署与端口开放 | Jiayyi&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="Jiayyi&#39;s blog">
-<meta property="og:url" content="https://jiayyi.github.io/index.html">
+  <meta name="description" content="之前在做网络编程的时候，想把服务端程序部署在远程服务器上，在本地用客户端与其连接，但是一直没有连接成功，今天在做软件安全实验时要求“远程部署溢出程序，并进行溢出测试“，再次遇到了这个问题，将其解决了，故作一记录，步骤如下，云服务的环境为ubuntu18.04 64位：  在云服务器安全组中打开指定端口，此处为8888；  在云服务器上开放指定端口， 12ptables -I INPUT -p tc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="远程服务器服务进程部署与端口开放">
+<meta property="og:url" content="https://jiayyi.github.io/2021/12/18/%E8%BF%9C%E7%A8%8B%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9C%8D%E5%8A%A1%E8%BF%9B%E7%A8%8B%E9%83%A8%E7%BD%B2%E4%B8%8E%E7%AB%AF%E5%8F%A3%E5%BC%80%E6%94%BE/index.html">
 <meta property="og:site_name" content="Jiayyi&#39;s blog">
+<meta property="og:description" content="之前在做网络编程的时候，想把服务端程序部署在远程服务器上，在本地用客户端与其连接，但是一直没有连接成功，今天在做软件安全实验时要求“远程部署溢出程序，并进行溢出测试“，再次遇到了这个问题，将其解决了，故作一记录，步骤如下，云服务的环境为ubuntu18.04 64位：  在云服务器安全组中打开指定端口，此处为8888；  在云服务器上开放指定端口， 12ptables -I INPUT -p tc">
 <meta property="og:locale">
+<meta property="og:image" content="https://s2.loli.net/2021/12/19/oaFrEHeORU6yc4i.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/19/uxJrNwQkz3BvAFl.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/19/ZqDCyhlAnOtbkGj.png">
+<meta property="article:published_time" content="2021-12-18T13:05:03.000Z">
+<meta property="article:modified_time" content="2021-12-18T17:29:41.682Z">
 <meta property="article:author" content="Jiayyi">
+<meta property="article:tag" content="问题与解决">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2021/12/19/oaFrEHeORU6yc4i.png">
   
     <link rel="alternate" href="/atom.xml" title="Jiayyi&#39;s blog" type="application/atom+xml">
   
@@ -62,9 +71,7 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-    <article id="post-远程服务器服务进程部署与端口开放" class="article article-type-post" itemscope itemprop="blogPost">
+        <section id="main"><article id="post-远程服务器服务进程部署与端口开放" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2021/12/18/%E8%BF%9C%E7%A8%8B%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9C%8D%E5%8A%A1%E8%BF%9B%E7%A8%8B%E9%83%A8%E7%BD%B2%E4%B8%8E%E7%AB%AF%E5%8F%A3%E5%BC%80%E6%94%BE/" class="article-date">
   <time datetime="2021-12-18T13:05:03.000Z" itemprop="datePublished">2021-12-18</time>
@@ -77,8 +84,8 @@
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2021/12/18/%E8%BF%9C%E7%A8%8B%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9C%8D%E5%8A%A1%E8%BF%9B%E7%A8%8B%E9%83%A8%E7%BD%B2%E4%B8%8E%E7%AB%AF%E5%8F%A3%E5%BC%80%E6%94%BE/">远程服务器服务进程部署与端口开放</a>
+    <h1 class="article-title" itemprop="name">
+      远程服务器服务进程部署与端口开放
     </h1>
   
 
@@ -113,11 +120,9 @@
     </footer>
   </div>
   
-</article>
-
-
+    
   
-
+</article>
 
 </section>
         
