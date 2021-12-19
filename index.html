@@ -88,84 +88,11 @@
       
         <h3 id="格式化字符串漏洞原理介绍"><a href="#格式化字符串漏洞原理介绍" class="headerlink" title="格式化字符串漏洞原理介绍"></a>格式化字符串漏洞原理介绍</h3><p>格式化字符串函数可以接受可变数量的参数，并将第一个参数作为格式化字符串，根据其来解析之后的参数。通俗来说，格式化字符串函数就是将计算机内存中表示的数据转化为我们人类可读的字符串格式。几乎所有的 C/C++ 程序都会利用格式化字符串函数来输出信息，调试程序，或者处理字符串。一般来说，格式化字符串在利用的时候主要分为三个部分：格式化字符串函数，格式化字符串，后续参数（可选）。</p>
 <p><img src="https://s2.loli.net/2021/12/19/zQD9S8hCRyKA4Lr.png" alt="格式化字符串介绍"></p>
-<p>格式化字符串函数是根据格式化字符串函数来进行解析的。那么相应的要被解析的参数的个数也自然是由这个格式化字符串所控制。比如说’%s’表明我们会输出一个字符串参数。在进入 printf 之后，函数首先获取第一个参数，一个一个读取其字符会遇到两种情况：</p>
-<ul>
-<li><p>当前字符不是 %，直接输出到相应标准输出。</p>
-</li>
-<li><p>当前字符是 %， 继续读取下一个字符</p>
-<ul>
-<li>如果没有字符，报错</li>
-<li> 如果下一个字符是 %, 输出 %</li>
-<li>否则根据相应的字符，获取相应的参数，对其进行解析并输出</li>
-</ul>
-</li>
-</ul>
-<p>那么假设，此时我们在编写程序时候，写成了下面的样子</p>
-<p><code>printf(&quot;Color %s, Number %d, Float %4.2f&quot;);</code></p>
-<p>此时我们可以发现我们并没有提供参数，程序会将栈上存储格式化字符串地址上面的三个变量分别解析为：解析其地址对应的字符串，解析其内容对应的整形值，解析其内容对应的浮点值。因此，格式化字符串漏洞将造成内存泄露，实现任意内存的读取及任意内存写入。</p>
-<h3 id="格式化字符串漏洞简单利用"><a href="#格式化字符串漏洞简单利用" class="headerlink" title="格式化字符串漏洞简单利用"></a>格式化字符串漏洞简单利用</h3><p>以下实验的实验环境为<code>ubuntu16.04 32位</code>。</p>
-<p>涉及到的一些格式化字符串的知识点：</p>
-<ul>
-<li><p>p， void * 型，输出对应变量的值。<code>printf(&quot;%p&quot;,a)</code> 用地址的格式打印变量 a 的值，<code>printf(&quot;%p&quot;, &amp;a)</code> 打印变量 a 所在的地址。</p>
-</li>
-<li><p>s，如果没有用 l 标志，输出 null 结尾字符串直到精度规定的上限；如果没有指定精度，则输出所有字节。如果用了 l 标志，则对应函数参数指向 wchar_t 型的数组，输出时把每个宽字符转化为多字节字符，相当于调用 wcrtomb 函数。</p>
-</li>
-<li><p>%n 将当前已打印字符的个数（4字节）写入参数地址处</p>
-<p>%hn 将当前已打印字符的个数（2字节）写入参数地址处</p>
-<p>%hhn 将当前已打印字符的个数（1字节）写入参数地址处</p>
-</li>
-<li><p>关于$：<code>%&lt;正整数 n&gt;$&lt;fmt&gt;</code> 指定占位符对应的第n个参数，例如%12$x指%x对应第12个参数。</p>
-</li>
-</ul>
-<p>首先编写存在格式化字符串漏洞的c语言程序。</p>
-<p><img src="https://s2.loli.net/2021/12/19/q7kjDomVR2MJc1B.png" alt="存在格式化字符串漏洞的C语言程序"></p>
-<p>用gcc编译链接<code>gcc -m32 -fno-stack-protector fmt.c -o fmt -g</code>，-m32 指的是生成 32 位程序； <code>-fno-stack-protector</code> 指的是不开启堆栈溢出保护，即不生成 canary。另外，需使用<code>echo 0 &gt; /proc/sys/kernel/randomize_va_space</code>关闭 Linux 系统的 ASLR。</p>
-<p><img src="https://s2.loli.net/2021/12/19/FlctLwAYk8pM9O7.png" alt="用gcc编译链接"></p>
-<ol>
-<li><p><strong>泄露栈上的变量</strong></p>
-<p>首先反编译main程序，查看语句<code>printf(buf)</code>所在的地址。</p>
-<p><img src="https://s2.loli.net/2021/12/19/aJ24WOReFBCuSiy.png" alt="查看print_buf_所在的地址"></p>
-<p>传送一个AAAA并在<code>printf(buf)</code>处下断点。</p>
-<p><img src="https://s2.loli.net/2021/12/19/kPv1F8RX6qQtubW.png" alt="传送一个AAAA并在printf_buf_处下断点"></p>
-<p>查看当前程序栈的内容，打印stack的前16个元素，4字节显示：<code>x/16wx $esp</code>。</p>
-<p>由于第一个位置上放的是格式化字符串，指向后面的参数，所以<code>0xffffd7fc</code>处存放的内容为AAAA。验证：<code>x/s 0xffffd7fc</code>，如下图所示。</p>
-<p><img src="https://s2.loli.net/2021/12/19/J3mOc1AIg5VQMEn.png" alt="查看当前程序栈的内容"></p>
-<p>打印栈上第二个位置处的内容进行验证：</p>
-<p><img src="https://s2.loli.net/2021/12/19/4RN6oyWj7fiMUwD.png" alt="查看输入后栈上第二个位置的内容"></p>
-<p><img src="https://s2.loli.net/2021/12/19/PHLpEX4jy2KVedw.png" alt="查看输入后栈上第七个位置的内容"></p>
-<p>可以看到栈上的内容已经泄露了。</p>
-</li>
-</ol>
-<ol start="2">
-<li><p><strong>泄露任意内存</strong></p>
-<p>刚才实验了我们输入的AAAA（0x41414141）可作为格式化字符串的第7个参数，用<code>%7$p</code>作为指针打印出来。如果我们要打印地址0x41414141指向的内容，可以把<code>%7$p</code>改为<code>%7$s</code>。利用<code>%s</code>我们可以输出任意地址指向的字符串，造成内存泄露。</p>
-<p>所以，我们通过将这4个字节修改为flag的地址，后期就可以进行修改flag的值。</p>
-<p>首先查看flag的地址。</p>
-<p><img src="https://s2.loli.net/2021/12/19/dHg1VBXhwvexAcO.png" alt="查看flag的地址"></p>
-<p>然后通过刚才的分析，我们可以打印flag的地址和内容。</p>
-<p>打印flag的地址：<code>./fmt $(python2.7 -c &#39;print&quot;\x28\xa0\x04\x08:%7$p&quot;&#39;)</code></p>
-<p><img src="https://s2.loli.net/2021/12/19/8AnQxI5ZJsTbaHe.png" alt="打印flag的地址"></p>
-<p>打印flag的内容：<code>./fmt $(python2.7 -c &#39;print&quot;\x28\xa0\x04\x08:%7$s&quot;&#39;)</code></p>
-<p><img src="https://s2.loli.net/2021/12/19/1nWO6QhPwb8VUFz.png" alt="打印flag的内容"></p>
-<p>打印出来的flag值为ABCD(0x44434241)，与我们程序中定义的相同。通过以上方法可以实现任意内存泄露。</p>
-</li>
-<li><p><strong>任意内存写</strong></p>
-<p>把<code>%7$s</code>改为<code>%7$n</code>，则printf的行为从打印flag处的字符串变成了修改flag处的四字节，修改的内容为到%n为止打印的字节数。如果要修改成任意值，则可以通过打印任意字节数来实现。</p>
-<p>由于打印字符数量可以控制写入的值，因此在%7$n之前可以用格式化字符串控制宽度的方法来控制要写入的值。比如构造命令行参数字符串为<code>“x28\xa0\x04\x08:%1234c7$n”</code>，打印的字符数变成了5+1234=1239，此时flag的值就改成了1239。如果要写入0x13371337，0x13371337-5=322376498，直接打印<code>%322376498c</code>需要很长时间，所以可以分开两个字节两个字节修改。使用<code>%hn</code>，一次只修改两个字节，把低2字节改成0x1337，计算得需要设置的打印宽度为0x1337-5=4914，所以使用<code>%4914c</code>来设置打印宽度；再修改高两个字节，因为前面已经打印了4919(0x1337)个字节，所以高两个字节这里不用再增加打印的字节。</p>
-<p>跟据以上分析进行实验。</p>
-<p>先尝试将刚才的s改为n，看看效果：<code>gdb --args ./fmt $(python2.7 -c &#39;print&quot;\x28\xa0\x04\x08:%7$n&quot;&#39;)</code></p>
-<p>分别在printf的前后下断点，运行程序。在printf之前的断点处，我们通过命令<code>x/wx 0x804a028</code>查看flag的值，这条命令的含义为以16进制4字节查看内存0x804a028中存放的值，可以看到此时flag的值为我们程序里设置的0x44434241；在printf之后的断点处，再次查看flag的值，可以看到flag的值变为5。因为此处打印的字符串为“\x28\xa0\x04\x08:”，一共5个字节。</p>
-<p><img src="https://s2.loli.net/2021/12/19/x9KnmgJWsrUN6XY.png" alt="修改flag的值为5"></p>
-<p>接下来实验写入任意值，尝试加入字符串控制宽度<code>%1234c</code>，将写入1239。可以看到写入后flag的值成功修改为1239(0x4d7)。</p>
-<p><img src="https://s2.loli.net/2021/12/19/2tCgTxjqFUsVX9O.png" alt="修改flag的值为1239"></p>
-<p>最后我们实验将flag的值改为0x13371337。使用%hn一次修改两字节，构造打印的字符串为“\x28\xa0\x04\x08\x2a\xa0\x04\x08:”，还需打印4910个字节。执行命令gdb –args ./fmt $(python2.7 -c ‘print”\x28\xa0\x04\x08\x2a\xa0\x04\x08:%4910c%7$hn%8$hn”‘) -g，调试，查看flag的值，成功被修改为0x13371337，同时程序运行后成功输出程序中设定的字符串 You Win!</p>
-<p><img src="https://s2.loli.net/2021/12/19/eUJtWY9hQpyni8A.png" alt="修改flag的值为0x13371337，输出“You Win!”"></p>
-<p>至此，实现了任意内存写任意值。</p>
-</li>
-</ol>
-<p><em>参考资料：CTF wiki</em></p>
-<p>​                   <em>Bilibili视频：合天网安实验室 格式化字符串漏洞分析</em></p>
-
+        
+          <p class="article-more-link">
+            <a href="/2021/12/19/%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%BC%8F%E6%B4%9E%E5%8E%9F%E7%90%86%E4%B8%8E%E5%88%A9%E7%94%A8/#more">Read More</a>
+          </p>
+        
       
     </div>
     <footer class="article-footer">
@@ -203,22 +130,12 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>之前在做网络编程的时候，想把服务端程序部署在远程服务器上，在本地用客户端与其连接，但是一直没有连接成功，今天在做软件安全实验时要求“远程部署溢出程序，并进行溢出测试“，再次遇到了这个问题，将其解决了，故作一记录，步骤如下，云服务的环境为<code>ubuntu18.04 64位</code>：</p>
-<ol>
-<li><p>在云服务器安全组中打开指定端口，此处为8888；</p>
-</li>
-<li><p>在云服务器上开放指定端口，</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ptables -I INPUT -p tcp --dport 8888 -j ACCEPT</span><br><span class="line">iptables-save</span><br></pre></td></tr></table></figure>
-
-<p><img src="https://s2.loli.net/2021/12/19/oaFrEHeORU6yc4i.png"></p>
-</li>
-<li><p>这个时候端口应该是已经开放了，但是本地<code>netstat  -na</code>查看该端口并没有处在监听状态，远程telnet也无法与其建立连接。原因是没有在该端口开启服务进程，下一步是开启一个服务进程<code>ncat -vc ./stack_example -kl 0.0.0.0 8888</code>，这边ip 0.0.0.0则可以接收所有原地址的连接请求，8888为该服务进程绑定的端口，./stack_example为我跑的服务的文件名。开启后再次用<code>netstat  -na</code>查看，可以看到该端口已经处于监听状态。</p>
-<p><img src="https://s2.loli.net/2021/12/19/uxJrNwQkz3BvAFl.png"></p>
-<p>同时远程telnet也连接成功，可以正常与该服务进程进行通信。</p>
-<p><img src="https://s2.loli.net/2021/12/19/ZqDCyhlAnOtbkGj.png"></p>
-</li>
-</ol>
-
+        <p>之前在做网络编程的时候，想把服务端程序部署在远程服务器上，在本地用客户端与其连接，但是一直没有连接成功，今天在做软件安全实验时要求“远程部署溢出程序，并进行溢出测试“，再次遇到了这个问题，将其解决了，故作一记录，步骤如下</p>
+        
+          <p class="article-more-link">
+            <a href="/2021/12/18/%E8%BF%9C%E7%A8%8B%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9C%8D%E5%8A%A1%E8%BF%9B%E7%A8%8B%E9%83%A8%E7%BD%B2%E4%B8%8E%E7%AB%AF%E5%8F%A3%E5%BC%80%E6%94%BE/#more">Read More</a>
+          </p>
+        
       
     </div>
     <footer class="article-footer">
