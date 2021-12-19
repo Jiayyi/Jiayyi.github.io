@@ -5,15 +5,35 @@
   
 
   
-  <title>Jiayyi&#39;s blog</title>
+  <title>格式化字符串漏洞原理与利用 | Jiayyi&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="Jiayyi&#39;s blog">
-<meta property="og:url" content="https://jiayyi.github.io/index.html">
+  <meta name="description" content="格式化字符串漏洞原理介绍格式化字符串函数可以接受可变数量的参数，并将第一个参数作为格式化字符串，根据其来解析之后的参数。通俗来说，格式化字符串函数就是将计算机内存中表示的数据转化为我们人类可读的字符串格式。几乎所有的 C&#x2F;C++ 程序都会利用格式化字符串函数来输出信息，调试程序，或者处理字符串。一般来说，格式化字符串在利用的时候主要分为三个部分：格式化字符串函数，格式化字符串，后续参数（可选）。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="格式化字符串漏洞原理与利用">
+<meta property="og:url" content="https://jiayyi.github.io/2021/12/19/%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%BC%8F%E6%B4%9E%E5%8E%9F%E7%90%86%E4%B8%8E%E5%88%A9%E7%94%A8/index.html">
 <meta property="og:site_name" content="Jiayyi&#39;s blog">
+<meta property="og:description" content="格式化字符串漏洞原理介绍格式化字符串函数可以接受可变数量的参数，并将第一个参数作为格式化字符串，根据其来解析之后的参数。通俗来说，格式化字符串函数就是将计算机内存中表示的数据转化为我们人类可读的字符串格式。几乎所有的 C&#x2F;C++ 程序都会利用格式化字符串函数来输出信息，调试程序，或者处理字符串。一般来说，格式化字符串在利用的时候主要分为三个部分：格式化字符串函数，格式化字符串，后续参数（可选）。">
 <meta property="og:locale">
+<meta property="og:image" content="https://s2.loli.net/2021/12/19/zQD9S8hCRyKA4Lr.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/19/q7kjDomVR2MJc1B.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/19/FlctLwAYk8pM9O7.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/19/aJ24WOReFBCuSiy.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/19/kPv1F8RX6qQtubW.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/19/J3mOc1AIg5VQMEn.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/19/4RN6oyWj7fiMUwD.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/19/PHLpEX4jy2KVedw.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/19/dHg1VBXhwvexAcO.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/19/8AnQxI5ZJsTbaHe.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/19/1nWO6QhPwb8VUFz.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/19/x9KnmgJWsrUN6XY.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/19/2tCgTxjqFUsVX9O.png">
+<meta property="og:image" content="https://s2.loli.net/2021/12/19/eUJtWY9hQpyni8A.png">
+<meta property="article:published_time" content="2021-12-19T06:45:15.000Z">
+<meta property="article:modified_time" content="2021-12-19T07:43:44.774Z">
 <meta property="article:author" content="Jiayyi">
+<meta property="article:tag" content="安全">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2021/12/19/zQD9S8hCRyKA4Lr.png">
   
     <link rel="alternate" href="/atom.xml" title="Jiayyi&#39;s blog" type="application/atom+xml">
   
@@ -62,9 +82,7 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-    <article id="post-格式化字符串漏洞原理与利用" class="article article-type-post" itemscope itemprop="blogPost">
+        <section id="main"><article id="post-格式化字符串漏洞原理与利用" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2021/12/19/%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%BC%8F%E6%B4%9E%E5%8E%9F%E7%90%86%E4%B8%8E%E5%88%A9%E7%94%A8/" class="article-date">
   <time datetime="2021-12-19T06:45:15.000Z" itemprop="datePublished">2021-12-19</time>
@@ -77,8 +95,8 @@
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2021/12/19/%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%BC%8F%E6%B4%9E%E5%8E%9F%E7%90%86%E4%B8%8E%E5%88%A9%E7%94%A8/">格式化字符串漏洞原理与利用</a>
+    <h1 class="article-title" itemprop="name">
+      格式化字符串漏洞原理与利用
     </h1>
   
 
@@ -177,64 +195,19 @@
     </footer>
   </div>
   
-</article>
-
-
+    
+<nav id="article-nav">
   
-    <article id="post-远程服务器服务进程部署与端口开放" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2021/12/18/%E8%BF%9C%E7%A8%8B%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9C%8D%E5%8A%A1%E8%BF%9B%E7%A8%8B%E9%83%A8%E7%BD%B2%E4%B8%8E%E7%AB%AF%E5%8F%A3%E5%BC%80%E6%94%BE/" class="article-date">
-  <time datetime="2021-12-18T13:05:03.000Z" itemprop="datePublished">2021-12-18</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2021/12/18/%E8%BF%9C%E7%A8%8B%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9C%8D%E5%8A%A1%E8%BF%9B%E7%A8%8B%E9%83%A8%E7%BD%B2%E4%B8%8E%E7%AB%AF%E5%8F%A3%E5%BC%80%E6%94%BE/">远程服务器服务进程部署与端口开放</a>
-    </h1>
+    <a href="/2021/12/18/%E8%BF%9C%E7%A8%8B%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9C%8D%E5%8A%A1%E8%BF%9B%E7%A8%8B%E9%83%A8%E7%BD%B2%E4%B8%8E%E7%AB%AF%E5%8F%A3%E5%BC%80%E6%94%BE/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">远程服务器服务进程部署与端口开放</div>
+    </a>
   
+</nav>
 
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>之前在做网络编程的时候，想把服务端程序部署在远程服务器上，在本地用客户端与其连接，但是一直没有连接成功，今天在做软件安全实验时要求“远程部署溢出程序，并进行溢出测试“，再次遇到了这个问题，将其解决了，故作一记录，步骤如下，云服务的环境为<code>ubuntu18.04 64位</code>：</p>
-<ol>
-<li><p>在云服务器安全组中打开指定端口，此处为8888；</p>
-</li>
-<li><p>在云服务器上开放指定端口，</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ptables -I INPUT -p tcp --dport 8888 -j ACCEPT</span><br><span class="line">iptables-save</span><br></pre></td></tr></table></figure>
-
-<p><img src="https://s2.loli.net/2021/12/19/oaFrEHeORU6yc4i.png"></p>
-</li>
-<li><p>这个时候端口应该是已经开放了，但是本地<code>netstat  -na</code>查看该端口并没有处在监听状态，远程telnet也无法与其建立连接。原因是没有在该端口开启服务进程，下一步是开启一个服务进程<code>ncat -vc ./stack_example -kl 0.0.0.0 8888</code>，这边ip 0.0.0.0则可以接收所有原地址的连接请求，8888为该服务进程绑定的端口，./stack_example为我跑的服务的文件名。开启后再次用<code>netstat  -na</code>查看，可以看到该端口已经处于监听状态。</p>
-<p><img src="https://s2.loli.net/2021/12/19/uxJrNwQkz3BvAFl.png"></p>
-<p>同时远程telnet也连接成功，可以正常与该服务进程进行通信。</p>
-<p><img src="https://s2.loli.net/2021/12/19/ZqDCyhlAnOtbkGj.png"></p>
-</li>
-</ol>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://jiayyi.github.io/2021/12/18/%E8%BF%9C%E7%A8%8B%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9C%8D%E5%8A%A1%E8%BF%9B%E7%A8%8B%E9%83%A8%E7%BD%B2%E4%B8%8E%E7%AB%AF%E5%8F%A3%E5%BC%80%E6%94%BE/" data-id="ckxc2m9ta000013rzdouxgblc" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E9%97%AE%E9%A2%98%E4%B8%8E%E8%A7%A3%E5%86%B3/" rel="tag">问题与解决</a></li></ul>
-
-    </footer>
-  </div>
   
 </article>
-
-
-  
-
 
 </section>
         
