@@ -93,41 +93,11 @@
 <h3 id="0x1-execve-函数介绍"><a href="#0x1-execve-函数介绍" class="headerlink" title="0x1 execve()函数介绍"></a>0x1 execve()函数介绍</h3><p>首先介绍一下execve()。</p>
 <p>函数原型：<code>int execve(const char *filename, char *const argv[], char *const envp[]);</code></p>
 <p>execve在父进程中fork一个子进程，在子进程中调用exec函数启动新的程序。execve()用来执行第一参数字符串所代表的文件路径；第二个参数是利用指针数组来传递给执行文件，并且需要以空指针(NULL)结束，按照惯例,第一个参数是我们要执行的文件名；最后一个参数则为传递给执行文件的新环境变量数组，一般来说他是一种键值对的形式 key=value。在/user/include/i386-linux-gnu/asm/中找到它的头文件unistd_32.h，查找execve的系统调用号码，可以找到execve的系统调用号码为11。</p>
-<p><img src="https://s2.loli.net/2021/12/20/eAwdPbr76R2Mfz1.png" alt="查找execve的系统调用号码"></p>
-<p>例如我们要实现使用ls 查看我们/home/chicho/result下面的文件夹的内容，则可以这样编写：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> arg, <span class="keyword">char</span> **args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">char</span> *argv[]=&#123;<span class="string">&quot;ls&quot;</span>,<span class="string">&quot;-al&quot;</span>,<span class="string">&quot;/home/chicho/result/&quot;</span>, <span class="literal">NULL</span>&#125;;</span><br><span class="line">    <span class="keyword">char</span> *envp[]=&#123;<span class="number">0</span>,<span class="literal">NULL</span>&#125;; <span class="comment">//传递给执行文件新的环境变量数组</span></span><br><span class="line">    execve(<span class="string">&quot;/bin/ls&quot;</span>,argv,envp);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>这个程序的功能相当于在/home/chicho/result下使用：ls -al。</p>
-<h3 id="0x2-C语言编写获取shell的程序"><a href="#0x2-C语言编写获取shell的程序" class="headerlink" title="0x2 C语言编写获取shell的程序"></a>0x2 C语言编写获取shell的程序</h3><p>类似的，如果通过C语言调用execve来返回shell的话，首先需要引入相应的头文件，然后在主函数中调用系统调用函数execve；同时传入三个参数。返回shell的程序可以编写为：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="keyword">char</span> *buf[]=&#123;<span class="string">&quot;/bin/sh&quot;</span>,<span class="literal">NULL</span>&#125;;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    execve(<span class="string">&quot;/bin/sh&quot;</span>,buf,<span class="number">0</span>);</span><br><span class="line">    <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>要提取该程序中的获取shell的shellcode，就是要获取exceve函数调用时的参数及软中断调用，通过软终端加载相应的系统调用号及参数来执行相应的任务。我们对刚才返回shell的程序用gcc编译链接生成可执行文件，再进行反汇编来获取相应的汇编代码或是二进制代码。注意这里要用静态编译，编译时加上-static选项。<br>查看execve函数反汇编后的结果。</p>
-<p><img src="https://s2.loli.net/2021/12/20/rclQ34B6MC7m81U.png" alt="查看execve函数反汇编后的结果"></p>
-<p>从反汇编结果来看，execve函数执行的前一部分首先将向寄存器ebx,ecx,edx中赋值。之后调用了（*0x80ef5a4）处的代码，该处就是_dl_sysinfo_int80，反汇编后发现其实是通过中断指令int 0x80进入ring0。执行Int 0x80软中断调用包括两个步骤，第一步，就是需要将系统调用号加入到eax中；第二步，寄存器赋值，ebx用于保存函数调用的第一个参数（ecx存放第二个参数，edx存放第三个参数，esi存放第四个参数，edi存放第五个参数）如果参数个数超过5个，那么就必须将参数数组存储在内存中，而且必须将该数组的地址存储在ebx中。一旦加载寄存器之后，就会调用int 0x80 汇编指令来发出软中断，强迫内核暂停手头上的工作并处理该中断。</p>
-<h3 id="0x3-汇编编写获取shell的程序"><a href="#0x3-汇编编写获取shell的程序" class="headerlink" title="0x3 汇编编写获取shell的程序"></a>0x3 汇编编写获取shell的程序</h3><p>通过对高级语言生成的可执行文件进行反汇编并分析，我们可以自己来直接编写汇编程序，这样可以控制坏字符的出现。整个程序的思路为：给寄存器赋值，第1个参数ebx为“/bin/sh”；第2个参数ecx是一个指针数组，第一个元素是第一个参数地址，第二个元素为空；第3个参数是edx为空。最后execve的系统调用号就放在了寄存器eax中=0xb。汇编源码如下。</p>
-<p><img src="https://s2.loli.net/2021/12/20/94LU3CNJkdItmKD.png" alt="返回shell的shellcode"></p>
-<p>在汇编源码中，首先是第4行eax清零；之后第5行压栈；然后第6行，第7行字符串压栈，这样在栈中就构造了以”\x00”结尾的字符串”/bin//sh”。在这里要注意x86堆栈中是从高地址到低地址的，所以要输入反向的字符串。同样，使用为4的倍数的最短指令会更容易些，而/bin/sh是7个字节，把它变成8个字节可以加个“/”。因为在Linux中，多几个/效果是一样的。“hs//nib/”的十六进制可以用python来生成。</p>
-<p><img src="https://s2.loli.net/2021/12/20/jVoIXFzuUGeK5vE.png" alt="查看十六进制"></p>
-<p>此时的ESP指针指向了这个字符串首地址，第8行将该首地址赋给ebx，这样就有了int 0x80中断指令的第一个参数ebx；第9行中eax入栈，此时eax值还是0；第10行ebx入栈也就是把字符串”/bin//sh”地址入栈，两次压栈，此时栈中就有了字符串地址和一个0，刚好构成了一个指针数组；第11行将该指针数组的地址也就是esp赋给ecx，系统调用的第2个参数ecx中就保持了指针数组的地址；第12行edx清零，刚好是系统调用的第3个参数为零。第13行将系统调用号0xB赋给al,这样可以避免出现坏字符。最后调用软中断指令执行。<br>整个栈结构如下图所示：</p>
-<p><img src="https://s2.loli.net/2021/12/20/tlEn8H1F3IBMTLy.png" alt="栈结构"></p>
-<p>对汇编源码编译、链接、执行，执行之后成功返回shell。</p>
-<p><img src="https://s2.loli.net/2021/12/20/F2xiMlQJBWRvgX1.png" alt="执行汇编源码返回shell"></p>
-<h3 id="0x4-提取shellcode并验证"><a href="#0x4-提取shellcode并验证" class="headerlink" title="0x4 提取shellcode并验证"></a>0x4 提取shellcode并验证</h3><p>接下来用objdump查看，提取shellcode的指令代码。可以利用一个方便提取shellcode的指令：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">objdump -d ./execve-<span class="built_in">stack</span>|grep <span class="string">&#x27;[0-9a-f]:&#x27;</span>|grep -v <span class="string">&#x27;file&#x27;</span>|cut -f2 -d:|cut -f1<span class="number">-6</span> -d<span class="number">&#x27;</span> <span class="string">&#x27;|tr -s &#x27;</span> <span class="string">&#x27;|tr &#x27;</span>\t<span class="number">&#x27;</span> <span class="string">&#x27; &#x27;</span>|sed <span class="string">&#x27;s/ $//g&#x27;</span>|sed <span class="string">&#x27;s/ /\\x/g&#x27;</span>|paste -d <span class="string">&#x27;&#x27; -s |sed &#x27;</span>s/^/<span class="string">&quot;/&#x27;|sed &#x27;s/$/&quot;</span>/g<span class="number">&#x27;</span></span><br></pre></td></tr></table></figure>
-
-<p><img src="https://s2.loli.net/2021/12/20/Ms3q2rCBf8JogLI.png" alt="用objdump查看"></p>
-<p><img src="https://s2.loli.net/2021/12/20/Q6abzxpCmuyhdkX.png" alt="提取shellcode"></p>
-<p>提取shellcode之后，编写C语言代码来验证该shellcode有效性。将shellcode代码放到一块内存区域，通过定义的一个函数指针指向该内存区并执行。</p>
-<p><img src="https://s2.loli.net/2021/12/20/ngHhMDLmdTRkNYF.png" alt="编写C语言代码"></p>
-<p>编译运行，注意编译时要添加execstack参数对该程序启动栈空间可执行权限。可以看到成功返回shell。</p>
-<p><img src="https://s2.loli.net/2021/12/20/x24mXQdME8YLJIc.png" alt="验证shellcode"></p>
-<h3 id="0x5-其他获取shellcode的方法"><a href="#0x5-其他获取shellcode的方法" class="headerlink" title="0x5 其他获取shellcode的方法"></a>0x5 其他获取shellcode的方法</h3><p>除了自己编写shellcode，也可以通过metasploit来生成shellcode，或者在一些shellcode网站上寻找我们所需功能的shellcode。</p>
-<p><img src="https://s2.loli.net/2021/12/20/9dgfNsBL2cpwqZ1.png" alt="通过metasploit生成shellcode"></p>
-<p>常用的shellcode网站有：</p>
-<p><a target="_blank" rel="noopener" href="http://www.expku.com/shellcode/">expku</a></p>
-<p><a target="_blank" rel="noopener" href="http://shell-storm.org/shellcode/">shell-storm</a></p>
-<p><a target="_blank" rel="noopener" href="https://www.exploit-db.com/shellcodes">exploit-db</a></p>
-
+        
+          <p class="article-more-link">
+            <a href="/2021/12/20/%E7%AE%80%E5%8D%95shellcode%E7%9A%84%E7%BC%96%E5%86%99%EF%BC%9A%E8%8E%B7%E5%8F%96shell/#more">Read More</a>
+          </p>
+        
       
     </div>
     <footer class="article-footer">
