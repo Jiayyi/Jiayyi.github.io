@@ -87,48 +87,11 @@
     <div class="article-entry" itemprop="articleBody">
       
         <h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>HIDS，即主机入侵检测系统。作为计算机系统的监视器和分析器，它并不作用于外部接口，而是专注于系统内部，监视系统全部或部分的动态的行为以及整个计算机系统的状态。HIDS的主要功能有日志监控、文件完整性检测、后门检测、实时告警、主动响应等。此HIDS有两种功能，第一个参数若为-m，则执行“显示主机中各个进程占用内存的情况“，若为-f，则执行“监控某个文件的读写情况“，第二个参数为日志记录文件的地址，分别利用linux中的ps和lnotifywait命令实现。</p>
-<h3 id="用法说明及演示"><a href="#用法说明及演示" class="headerlink" title="用法说明及演示"></a>用法说明及演示</h3><ul>
-<li><p>显示主机中各个进程占用内存的情况</p>
-<p>执行命令<code>./jiayi_hids.sh -m /var/log/jiayyi.log</code>启动应用进程占用内存情况监控，每一秒在控制台输出一次各个应用进程占用内存情况，日志文件记录在<code>/var/log/jiayyi.log</code>中。</p>
-<p>运行结果如下</p>
-<p><a target="_blank" rel="noopener" href="https://imgtu.com/i/TD6eFe"><img src="https://s4.ax1x.com/2021/12/27/TD6eFe.png"></a></p>
-<p>进入日志路径查看日志文件</p>
-<p><a target="_blank" rel="noopener" href="https://imgtu.com/i/TD6mJH"><img src="https://s4.ax1x.com/2021/12/27/TD6mJH.png"></a></p>
-</li>
-<li><p>监控某个文件的读写情况</p>
-<p>执行命令<code>./jiayi_hids.sh -f /var/log/test.log</code>启动文件读写情况监控，另外启动一个进程修改exp.py文件的内容（此处我指定了要监控的文件为exp.py），可以看到控制台中输出了相应的信息，同时记录在日志文件中。</p>
-<p><a target="_blank" rel="noopener" href="https://imgtu.com/i/TD6VoD"><img src="https://s4.ax1x.com/2021/12/27/TD6VoD.png"></a></p>
-</li>
-</ul>
-<h3 id="相关知识点介绍"><a href="#相关知识点介绍" class="headerlink" title="相关知识点介绍"></a>相关知识点介绍</h3><ul>
-<li><p>ps命令：用于显示当前进程的状态。</p>
-<ul>
-<li> -a   Select all processes except both session leaders (see getsid(2)) and processes not associated with a terminal. </li>
-<li> -o   format  User-defined format.format is a single argument in the form of a blank-separated or comma-separated list, which offers a way to specify individual output columns. </li>
-</ul>
-</li>
-<li><p>inotify：是一个内核用于通知用户空间程序文件系统变化的机制。当需要对Linux文件系统进行高效率、细粒度、异步地监控时，可以采用 inotify。可利用它对用户空间进行安全、性能以及其他方面的监控。</p>
-</li>
-<li><p>inotify-tools：inotify是一个API，需要通过开发应用程序进行调用，对于大多数用户来讲这有着许多不便，inotify-tools的出现弥补了这一不足。inotify-tools是一套组件，它包括一个C库和几个命令行工具，这些命令行工具可用于通过命令行或脚本对某文件系统的事件进行监控。</p>
-<p>inotify-tools提供两个命令行工具：</p>
-<ul>
-<li>inotifywait：通过inotify API等待被监控文件上的相应事件并返回监控结果，默认情况下，正常的结果返回至标准输出，诊断类的信息则返回至标准错误输出。它可以在监控到对应监控对象上指定的事件后退出，也可以进行持续性的监控。</li>
-<li>inotifywatch：通过inotify API收集被监控文件或目录的相关事件并输出统计信息，例如统计文件系统被访问的次数。</li>
-</ul>
-<p>可监听的事件：</p>
-<p>access 文件读取<br>modify 文件更改。<br>attrib 文件属性更改，如权限，时间戳等。<br>close_write 以可写模式打开的文件被关闭，不代表此文件一定已经写入数据。<br>close_nowrite 以只读模式打开的文件被关闭。<br>close 文件被关闭，不管它是如何打开的。<br>open 文件打开。<br>moved_to 一个文件或目录移动到监听的目录，即使是在同一目录内移动，此事件也触发。<br>moved_from 一个文件或目录移出监听的目录，即使是在同一目录内移动，此事件也触发。<br>move 包括moved_to和 moved_from<br>move_self 文件或目录被移除，之后不再监听此文件或目录。<br>create 文件或目录创建<br>delete 文件或目录删除<br>delete_self 文件或目录移除，之后不再监听此文件或目录<br>unmount 文件系统取消挂载，之后不再监听此文件系统。</p>
-</li>
-<li><p>Inotifywait：用来监控文件或目录的变化。</p>
-<ul>
-<li>-q,指定一次，不会输出详细信息，指定二次，除了致命错误，不会输出任何信息。</li>
-<li>-m,接收到一个事情而不退出，无限期地执行。默认的行为是接收到一个事情后立即退出。</li>
-<li>–timefmt 指定时间格式，用于–format选项中的%T格式。</li>
-<li>–format 指定输出格式。<br>%w 表示发生事件的目录<br>%f 表示发生事件的文件<br>%e 表示发生的事件<br>%Xe 事件以“X”分隔<br>%T 使用由–timefmt定义的时间格式</li>
-</ul>
-</li>
-</ul>
-<h3 id="实现代码"><a href="#实现代码" class="headerlink" title="实现代码"></a>实现代码</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">!/bin/bash</span></span><br><span class="line">if [ $# != 2 ]</span><br><span class="line">then</span><br><span class="line">	echo &quot;Invalid arguments, please input again&quot;</span><br><span class="line">elif [ &quot;$1&quot; == &quot;-f&quot; ]</span><br><span class="line">then</span><br><span class="line">        inotifywait -mq --timefmt &#x27;%y/%m/%d %H:%M:%S&#x27; --format  &#x27;%T %w%f %e&#x27; --event delete,modify,create,attrib  /home/exp.py | while read  date time file event</span><br><span class="line">        do</span><br><span class="line">                echo $event&#x27; &#x27;$file&#x27; &#x27;$date&#x27;-&#x27;$time</span><br><span class="line">                echo $event&#x27; &#x27;$file&#x27; &#x27;$date&#x27;-&#x27;$time &gt;&gt; $2</span><br><span class="line">        done</span><br><span class="line">elif [ &quot;$1&quot; == &quot;-m&quot; ]</span><br><span class="line">then</span><br><span class="line">        while :</span><br><span class="line">        do</span><br><span class="line">                date</span><br><span class="line">                ps -ao pid,%mem,vsz,rss,command</span><br><span class="line">                echo</span><br><span class="line">                date &gt;&gt; $2</span><br><span class="line">                ps -ao pid,%mem,vsz,rss,command &gt;&gt; $2</span><br><span class="line">                echo &gt;&gt; $2</span><br><span class="line">                sleep 1</span><br><span class="line">        done</span><br><span class="line">else</span><br><span class="line">        echo &quot;Invalid arguments, please input again&quot;</span><br><span class="line">fi</span><br></pre></td></tr></table></figure>
-
+        
+          <p class="article-more-link">
+            <a href="/2021/12/27/shell%E7%BC%96%E7%A8%8B%E5%85%A5%E9%97%A8%EF%BC%9A%E5%AE%9E%E7%8E%B0%E7%AE%80%E6%98%93HIDS/#more">Read More</a>
+          </p>
+        
       
     </div>
     <footer class="article-footer">
