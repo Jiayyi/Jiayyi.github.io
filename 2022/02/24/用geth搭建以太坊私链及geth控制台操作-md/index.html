@@ -19,7 +19,7 @@
 <meta property="og:image" content="https://s4.ax1x.com/2022/02/24/bPy5ee.png">
 <meta property="og:image" content="https://s4.ax1x.com/2022/02/24/bPyIdH.png">
 <meta property="article:published_time" content="2022-02-23T16:45:09.000Z">
-<meta property="article:modified_time" content="2022-02-23T16:55:27.582Z">
+<meta property="article:modified_time" content="2022-02-23T17:00:48.465Z">
 <meta property="article:author" content="Jiayyi">
 <meta property="article:tag" content="区块链">
 <meta name="twitter:card" content="summary">
@@ -152,7 +152,7 @@
 <h5 id="初始化创世块"><a href="#初始化创世块" class="headerlink" title="初始化创世块"></a>初始化创世块</h5><p>在桌面新建目录myChain，genesis.json放在该目录中。执行初始化命令：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">geth --datadir myChain init myChain/genesis.json</span><br></pre></td></tr></table></figure>
 
-<p><a target="_blank" rel="noopener" href="https://imgtu.com/i/bPy7FA"><img src="https://s4.ax1x.com/2022/02/24/bPy7FA.png" alt="bPy7FA.png"></a></p>
+<p><a target="_blank" rel="noopener" href="https://imgtu.com/i/bPy7FA"><img src="https://s4.ax1x.com/2022/02/24/bPy7FA.png"></a></p>
 <h5 id="启动私链"><a href="#启动私链" class="headerlink" title="启动私链"></a>启动私链</h5><p>注意要将 networked 设置为与创世块配置里的chainId 一致。</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">geth --datadir myChain --networkid 15</span><br></pre></td></tr></table></figure>
 
@@ -217,13 +217,13 @@
 <h3 id="五、问题总结"><a href="#五、问题总结" class="headerlink" title="五、问题总结"></a>五、问题总结</h3><ol>
 <li>进入控制台后会自动进行looking for peers，影响后续操作。</li>
 </ol>
-<p><a target="_blank" rel="noopener" href="https://imgtu.com/i/bPyood"><img src="https://s4.ax1x.com/2022/02/24/bPyood.png" alt="bPyood.png"></a></p>
+<p><a target="_blank" rel="noopener" href="https://imgtu.com/i/bPyood"><img src="https://s4.ax1x.com/2022/02/24/bPyood.png"></a></p>
 <p>解决方法一种是在输入的指令console后再加：–nodiscover，关闭p2p网络的自动发现；</p>
 <p>另一种是console后再加 2&gt;output.log，输出到另一个文件中。可以用tail -f output.log动态查看日志中的信息。tail -f filename 会把 filename 文件里的最尾部的内容显示在屏幕上，并且不断刷新，只要 filename 更新就可以看到最新的文件内容。</p>
 <p>2.miner.start()挖矿失败。</p>
 <p>方法一：启动节点挖矿之前，需要查看当前节点中是否已经存在账号，可执行命令：personal.listAccounts，查看当前节点下面是否有账号存在。当确认账户已经存在时，可以设置Etherbase。先查看coinbase账户：eth.coinbase，然后执行设置挖矿账户：miner.setEtherbase(eth.coinbase)，也可以执行执行以下命令进行设置：miner.setEtherbase(eth.accounts[0])。然后再执行挖矿命令，可以看到已经开始挖矿。</p>
-<p><a target="_blank" rel="noopener" href="https://imgtu.com/i/bPy5ee"><img src="https://s4.ax1x.com/2022/02/24/bPy5ee.png" alt="bPy5ee.png"></a></p>
-<p><a target="_blank" rel="noopener" href="https://imgtu.com/i/bPyIdH"><img src="https://s4.ax1x.com/2022/02/24/bPyIdH.png" alt="bPyIdH.png"></a></p>
+<p><a target="_blank" rel="noopener" href="https://imgtu.com/i/bPy5ee"><img src="https://s4.ax1x.com/2022/02/24/bPy5ee.png"></a></p>
+<p><a target="_blank" rel="noopener" href="https://imgtu.com/i/bPyIdH"><img src="https://s4.ax1x.com/2022/02/24/bPyIdH.png"></a></p>
 <p>方法二：用–dev模式。</p>
 <p>–dev是通过PoA挖矿，预先会有一个可以挖矿的开发者账户。当有交易生成，需要我们挖矿时，它会自动进行挖矿。</p>
 <p>先在桌面上新建一个文件夹myDevChain，然后直接运行命令：</p>
